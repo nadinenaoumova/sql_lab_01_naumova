@@ -7,21 +7,6 @@
 
 **Текст задания:** Продажи (sales) в январе 2018 года. Сортировка: сумма (по возрастанию).
 
-**SQL-запрос:**
-```sql
-SELECT
-    customer_id,
-    product_id,
-    sales_transaction_date,
-    sales_amount,
-    channel,
-    dealership_id
-FROM sales
-WHERE sales_transaction_date >= '2018-01-01'
-  AND sales_transaction_date < '2018-02-01'
-ORDER BY sales_amount ASC;
-```
-
 **Результат выполнения:**
 ![Задание 1 - результат](task1_select.png)
 
