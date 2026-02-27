@@ -7,7 +7,8 @@
 
 **Текст задания:** Продажи (sales) в январе 2018 года. Сортировка: сумма (по возрастанию). 
 **Результат выполнения:**
-<img width="468" height="324" alt="Рисунок1" src="https://github.com/user-attachments/assets/bfe32bb7-65b5-424b-bd46-7cf2eb6e9d08" />
+<img width="853" height="658" alt="image" src="https://github.com/user-attachments/assets/bac9e516-a048-45aa-b603-990ece742160" />
+
 
 
 
