@@ -70,3 +70,4 @@ SELECT
     termination_date
 FROM female_staff
 ORDER BY hire_date ASC;
+
