@@ -22,7 +22,8 @@
 
 **Результат выполнения:**
 
-<img width="468" height="324" alt="Рисунок2" src="https://github.com/user-attachments/assets/a7709cf9-4aa8-43bf-ba69-c39deea7ce3e" />
+<img width="1050" height="690" alt="image" src="https://github.com/user-attachments/assets/ac9445ee-7304-473d-85d6-733abaf4d096" />
+
 
 
 *На скриншоте представлены клиенты, чьи IP-адреса начинаются с "192.", отсортированные по фамилии и имени.*
