@@ -212,12 +212,172 @@ SELECT * FROM products_var014 FINAL;
 <img width="876" height="400" alt="image" src="https://github.com/user-attachments/assets/25c394a9-806c-4d2f-940e-9af90187434b" />
 
 
+##  Задание 4. ReplacingMergeTree — справочник товаров
 
-**Скриншот плана после индексации:**
+**Условие:**
+Создайте таблицу daily_metrics_var014 в базе db_var014. 
+1. Вставьте данные за 7 дней для 4 кампаний по 2 канала каждая. campaign_id начинается с 141.
+2. Вставьте повторные строки с теми же ключами (metric_date, campaign_id, channel), но с другими значениями метрик.
+3. Выполните OPTIMIZE TABLE daily_metrics_varN014 FINAL.
+4. Убедитесь, что числовые столбцы (impressions, clicks, conversions, spend_cents) просуммировались для строк с одинаковыми ключами.
+5. Напишите запрос: суммарные clicks / impressions (CTR) по каналам.
+
+**4.1**
+```sql
+CREATE TABLE daily_metrics_var014 (
+    metric_date    Date,
+    campaign_id    UInt32,
+    channel        LowCardinality(String),
+    impressions    UInt64,
+    clicks         UInt64,
+    conversions    UInt32,
+    spend_cents    UInt64
+)
+ENGINE = SummingMergeTree()
+ORDER BY (metric_date, campaign_id, channel);
+
+---Вставляем данные за 7 дней для 4 кампаний, по 2 канала каждая
+INSERT INTO daily_metrics_var014
+SELECT
+    toDate('2024-10-01') + INTERVAL (number % 7) DAY AS metric_date,
+    141 + (number % 4) AS campaign_id,
+    CASE (number % 2) WHEN 0 THEN 'Email' ELSE 'Social' END AS channel,
+    1000 + (number % 5000) AS impressions,
+    50 + (number % 300) AS clicks,
+    1 + (number % 20) AS conversions,
+    5000 + (number % 10000) AS spend_cents
+FROM numbers(56);
+```
+
+**4.2**
+```sql
+---Вставляем повторные строки с теми же ключами (для проверки суммирования)
+INSERT INTO daily_metrics_var014
+SELECT
+    toDate('2024-10-01') + INTERVAL (number % 7) DAY AS metric_date,
+    141 + (number % 4) AS campaign_id,
+    CASE (number % 2) WHEN 0 THEN 'Email' ELSE 'Social' END AS channel,
+    500 + (number % 1000) AS impressions,
+    10 + (number % 100) AS clicks,
+    1 + (number % 10) AS conversions,
+    1000 + (number % 5000) AS spend_cents
+FROM numbers(28);
+```
+
+**4.3**
+```sql
+---Проверяем данные до оптимизации (должно быть много строк)
+SELECT COUNT(*) AS total_rows FROM daily_metrics_var014;
+```
+
+**4.4**
+```sql
+---Выполняем OPTIMIZE для принудительного суммирования
+OPTIMIZE TABLE daily_metrics_var014 FINAL;
+```
+
+**4.5**
+```sql
+---Проверяем, что данные просуммировались. Смотрим, сколько строк осталось (должно быть 7 дней × 4 кампании × 2 канала = 56 строк)
+SELECT 
+    metric_date,
+    campaign_id,
+    channel,
+    impressions,
+    clicks,
+    conversions,
+    spend_cents
+FROM daily_metrics_var014
+ORDER BY metric_date, campaign_id, channel;
+```
+
+**4.6**
+```sql
+---CTR (Click-Through Rate) по каналам
+SELECT
+    channel,
+    SUM(clicks) AS total_clicks,
+    SUM(impressions) AS total_impressions,
+    round(SUM(clicks) / SUM(impressions), 4) AS CTR
+FROM daily_metrics_var014
+GROUP BY channel;
+```
+**Скриншот выполнения:**
+<img width="765" height="471" alt="image" src="https://github.com/user-attachments/assets/e710f911-cf0a-4392-8742-2bbb2c524a69" />
 
 
-**Сравнение:**
-Время выполнения уменьшилось с с 179.051 мс до 88.852 мс.
+
+##  Задание 5. Комплексный анализ и самопроверка
+
+**Условие:**
+Выполните следующие запросы и зафиксируйте результаты:
+
+**5.1 Проверка партиций таблицы sales_var014:**
+
+```sql
+SELECT
+    partition,
+    count() AS parts,
+    sum(rows) AS total_rows,
+    formatReadableSize(sum(bytes_on_disk)) AS size
+FROM system.parts
+WHERE database = 'db_14'
+  AND table = 'sales_var014'
+  AND active
+GROUP BY partition
+ORDER BY partition;
+```
+**Скриншот выполнения:**
+
+**5.2 JOIN между таблицами — соедините sales_varNNN с products_varNNN по product_id и выведите топ-5 товаров по суммарной выручке:**
+```sql
+SELECT
+    p.product_name,
+    p.category,
+    round(sum(s.quantity * s.unit_price * (1 - s.discount_pct)), 2) AS revenue
+FROM sales_var014 AS s
+INNER JOIN products_var014 AS p
+    ON s.product_id = p.product_id
+GROUP BY p.product_name, p.category
+ORDER BY revenue DESC
+LIMIT 5;
+```
+**Скриншот выполнения:**
+
+**5.3 Типы данных — выведите структуру всех трёх созданных таблиц:**
+
+```sql
+DESCRIBE TABLE sales_var014;
+DESCRIBE TABLE products_var014;
+DESCRIBE TABLE daily_metrics_var014;
+```
+
+**Скриншот выполнения:**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
