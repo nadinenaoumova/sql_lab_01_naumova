@@ -306,7 +306,6 @@ GROUP BY channel;
 <img width="765" height="471" alt="image" src="https://github.com/user-attachments/assets/e710f911-cf0a-4392-8742-2bbb2c524a69" />
 
 
-
 ##  Задание 5. Комплексный анализ и самопроверка
 
 **Условие:**
@@ -328,6 +327,8 @@ GROUP BY partition
 ORDER BY partition;
 ```
 **Скриншот выполнения:**
+<img width="441" height="153" alt="image" src="https://github.com/user-attachments/assets/e419d569-df2e-46ef-ab5c-06afeb9d12fe" />
+
 
 **5.2 JOIN между таблицами — соедините sales_varNNN с products_varNNN по product_id и выведите топ-5 товаров по суммарной выручке:**
 ```sql
@@ -343,6 +344,8 @@ ORDER BY revenue DESC
 LIMIT 5;
 ```
 **Скриншот выполнения:**
+<img width="655" height="228" alt="image" src="https://github.com/user-attachments/assets/def4f5c7-673b-43c5-b0e4-7211f42a0557" />
+
 
 **5.3 Типы данных — выведите структуру всех трёх созданных таблиц:**
 
@@ -353,6 +356,68 @@ DESCRIBE TABLE daily_metrics_var014;
 ```
 
 **Скриншот выполнения:**
+<img width="470" height="443" alt="image" src="https://github.com/user-attachments/assets/34f44b79-4b03-45dd-894e-92293c13669b" />
+<img width="403" height="361" alt="image" src="https://github.com/user-attachments/assets/2deaff9d-6b1c-4112-bfbc-30b44dd7e210" />
+<img width="475" height="302" alt="image" src="https://github.com/user-attachments/assets/a2f9e27f-c2f7-4898-abf8-ad809ac4452d" />
+
+
+**5.4 Запрос с массивом — создайте временную таблицу tags_var014 с колонкой Array(String) и выполните запрос с arrayJoin:**
+
+```sql
+-- Создаём временную таблицу tags_var014
+CREATE TABLE tags_var014 (
+    item_id  UInt32,
+    item_name String,
+    tags     Array(String)
+) ENGINE = MergeTree()
+ORDER BY item_id;
+
+-- Вставляем данные
+INSERT INTO tags_var014 VALUES
+(1, 'Item A', ['sale', 'popular', 'new']),
+(2, 'Item B', ['premium', 'limited']),
+(3, 'Item C', ['sale', 'clearance']);
+
+-- Запрос с arrayJoin
+SELECT
+    arrayJoin(tags) AS tag,
+    count() AS items_count
+FROM tags_var014
+GROUP BY tag
+ORDER BY items_count DESC;
+```
+**Скриншот выполнения:**
+<img width="370" height="264" alt="image" src="https://github.com/user-attachments/assets/7f448de4-e811-40d9-94ff-5b4be8c05274" />
+
+
+**5.5 Контрольная сумма — итоговая проверка:**
+
+```sql
+SELECT
+    'sales' AS tbl, 
+    count() AS rows, 
+    sum(quantity) AS check_sum 
+FROM db_14.sales_var014
+
+UNION ALL
+
+SELECT
+    'products', 
+    count(), 
+    sum(toUInt64(product_id)) 
+FROM db_14.products_var014 FINAL
+
+UNION ALL
+
+SELECT
+    'metrics', 
+    count(), 
+    sum(clicks) 
+FROM daily_metrics_var014;
+```
+
+**Скриншот выполнения:**
+<img width="558" height="159" alt="image" src="https://github.com/user-attachments/assets/26b0545d-5724-41c7-bfc2-a95cbaec2435" />
 
 
 
@@ -361,37 +426,4 @@ DESCRIBE TABLE daily_metrics_var014;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
----
-
-
-| Задание | Без индекса | С индексом | Ускорение |
-|---------|-------------|------------|-----------|
-| **Задание 2** (поиск по дате) | 6.682 ms | 0.436 ms | **↓ в 15.3 раза** |
-| **Задание 3** (JOIN + точное совпадение) | 179.051 ms | 88.852 ms | **↓ в 2.01 раза** |
-
-
-##  Выводы
-
-* B-Tree индекс на поле date_opened ускорил запрос в 15.3 раза
-* B-Tree индекс на поле email_subject ускорил сложный JOIN-запрос в 2.01 раза
-* Количество прочитанных страниц памяти уменьшилось в 4.5-8 раз
-* Планировщик изменил стратегию с Seq Scan на Bitmap Index Scan, что позволило читать только нужные данные
 
